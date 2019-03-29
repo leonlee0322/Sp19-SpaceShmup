@@ -12,17 +12,20 @@ public class Hero : MonoBehaviour
     public float gameRestartDelay = 2f;
     public GameObject projectilePrefab;
     public float projectileSpeed = 40;
+    public Weapon[] weapons;
     [Header("Set Dynamically")]
     public float _shieldLevel = 1;
     private GameObject lastTriggerGo = null;
     public delegate void WeaponFireDelegate();                               // a 
     // Create a WeaponFireDelegate field named fireDelegate. 
     public WeaponFireDelegate fireDelegate;
-    void Awake()
+    void Start()
     {
         if (S == null)
         {
-            S = this; // Set the Singleton                                   // a
+            S = this; // Set the Singleton
+            ClearWeapons();
+            weapons[0].SetType(WeaponType.blaster);                               // a
         }
         else
         {
@@ -77,10 +80,42 @@ public class Hero : MonoBehaviour
             shieldLevel--;        // Decrease the level of the shield by 1
             Destroy(go);          // … and Destroy the enemy                 // e
         }
+        else if (go.tag == "PowerUp")
+        {
+            // If the shield was triggered by a PowerUp
+            AbsorbPowerUp(go);
+        }
         else
         {
-            print("Triggered by non-Enemy: " + go.name);                       // f
+            print("Triggered by non-Enemy: " + go.name);
         }
+    }
+    public void AbsorbPowerUp(GameObject go)
+    {
+        PowerUp pu = go.GetComponent<PowerUp>();
+        switch (pu.type)
+        {
+            case WeaponType.shield:                                          // a
+                shieldLevel++;
+                break;
+            default:                                                         // b
+                if (pu.type == weapons[0].type)
+                { // If it is the same type  // c
+                    Weapon w = GetEmptyWeaponSlot();
+                    if (w != null)
+                    {
+                        // Set it to pu.type
+                        w.SetType(pu.type);
+                    }
+                }
+                else
+                { // If this is a different weapon type               // d
+                    ClearWeapons();
+                    weapons[0].SetType(pu.type);
+                }
+                break;
+        }
+        pu.AbsorbedBy(this.gameObject);
     }
     public float shieldLevel
     {
@@ -97,6 +132,24 @@ public class Hero : MonoBehaviour
                 Destroy(this.gameObject);
                 Main.S.DelayedRestart(gameRestartDelay);                 // a
             }
+        }
+    }
+    Weapon GetEmptyWeaponSlot()
+    {
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            if (weapons[i].type == WeaponType.none)
+            {
+                return (weapons[i]);
+            }
+        }
+        return (null);
+    }
+    void ClearWeapons()
+    {
+        foreach (Weapon w in weapons)
+        {
+            w.SetType(WeaponType.none);
         }
     }
 }

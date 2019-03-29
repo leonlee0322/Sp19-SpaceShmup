@@ -10,7 +10,8 @@ public class Enemy : MonoBehaviour
     public int score = 100;      // Points earned for destroying this
                                  // This is a Property: A method that acts like a field
     public float showDamageDuration = 0.1f; // # seconds to show damage // a
-    [Header("Set Dynamically: Enemy")]
+    public float powerUpDropChance = 1f;  // Chance to drop a power-up  // a
+    [Header("There fields are Set Dynamically")]
     public Color[] originalColors;
     public Material[] materials;// All the Materials of this & its children
     public bool showingDamage = false;
@@ -79,6 +80,11 @@ public class Enemy : MonoBehaviour
                 health -= Main.GetWeaponDefinition(p.type).damageOnHit;
                 if (health <= 0)
                 {                                           // d
+                    if (!notifiedOfDestruction)
+                    {
+                        Main.S.shipDestroyed(this);
+                    }
+                    notifiedOfDestruction = true;
                     // Destroy this Enemy
                     Destroy(this.gameObject);
                 }
